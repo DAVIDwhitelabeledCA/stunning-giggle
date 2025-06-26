@@ -28,7 +28,7 @@ import {
   type InsertChatRoomMember,
 } from "../shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -272,8 +272,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadNotifications(userId: string): Promise<Notification[]> {
-    return await db.select().from(notifications)
-      .where(eq(notifications.userId, userId) && eq(notifications.isRead, false));
+    return await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.isRead, false),
+        ),
+      );
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
@@ -317,8 +324,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUpcomingEvents(): Promise<Event[]> {
     const now = new Date();
-    return await db.select().from(events)
-      .where(eq(events.startTime, now));
+    return await db
+      .select()
+      .from(events)
+      .where(gte(events.startTime, now));
   }
 
   async getEventById(id: number): Promise<Event | undefined> {
